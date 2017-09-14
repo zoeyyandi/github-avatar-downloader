@@ -1,48 +1,31 @@
-var request = require('request');
-var fs = require('fs');
+const request = require('request')
+const fs = require('fs');
+const githubApi = require('./github_api')
 
-var owner = process.argv[2]
-var repo = process.argv[3]
-
-
-var GITHUB_USER = "zoeyyandi";
-var GITHUB_TOKEN = "aa3b475bc6c9a053c9cd9ffe762676426e3553d5";
+const owner = process.argv[2]
+const repo = process.argv[3]
 
 console.log('Welcome to the GitHub Avatar Downloader!');
 
-function getRepoContributors(repoOwner, repoName, cb) {
-  if(!repoOwner || !repoName) {
-    console.log('Please provide repository owner and repository name!')
-    return
-  }
-
-  var requestURL = 'https://'+ GITHUB_USER + ':' + GITHUB_TOKEN + '@api.github.com/repos/' + repoOwner + '/' + repoName + '/contributors';
-  var options = {
-      url: requestURL,
-      headers: {
-          'User-Agent': 'request'
-      }
-  }
-  request.get(options, function(err, response, body) {
-    cb(err, JSON.parse(body));
+if(owner && owner !== "" && repo && repo !== "") {
+  githubApi.getRepoContributors(owner, repo, function(error, items) {
+    if (error) {
+      console.log('Got Error:', error)
+      return
+    }
+    let avatar_urls = items.map(function(key) {
+      return key.avatar_url
+    })
+    avatar_urls.map(function(url, index) {
+      downloadImageByURL(url, `avatars/avatar${index}.jpg`)
+    })
   })
+} else {
+  console.log('Please provide valid repository owner and/or repository name!')
 }
-
-var callback = function(err, result) {
-  var avatar_urls = result.map(function(item) {
-      return item.avatar_url
-  })
-
-  avatar_urls.map(function(url, index) {
-    downloadImageByURL(url, `avatars/avatar${index}.jpg`)
-  })
-}
-
-getRepoContributors(owner, repo, callback)
 
 function downloadImageByURL(url, filePath) {
   request.get(url, function(err, response, body) {
-
   })
   .on('end', function() {
     console.log('Download Completed')
